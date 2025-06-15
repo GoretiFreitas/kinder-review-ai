@@ -44,7 +44,7 @@ const RevisionReview = () => {
     });
   };
 
-  const handleDownload = async (format: 'pdf' | 'docx') => {
+  const handleDownload = async (format: 'pdf' | 'rtf') => {
     console.log(`Starting ${format.toUpperCase()} download...`);
     
     try {
@@ -57,8 +57,8 @@ const RevisionReview = () => {
         console.log('Calling generatePDF...');
         generatePDF(reviewSections);
       } else {
-        console.log('Calling generateDOCX...');
-        await generateDOCX(reviewSections);
+        console.log('Calling generateRTF...');
+        await generateDOCX(reviewSections); // This actually generates RTF
       }
 
       toast({
@@ -190,10 +190,10 @@ const RevisionReview = () => {
                 <Button
                   size="lg"
                   className="bg-blue-600 hover:bg-blue-700 text-white"
-                  onClick={() => handleDownload('docx')}
+                  onClick={() => handleDownload('rtf')}
                 >
                   <Download className="mr-2 h-5 w-5" />
-                  Download DOCX Review
+                  Download RTF Review
                 </Button>
               </div>
             </CardContent>

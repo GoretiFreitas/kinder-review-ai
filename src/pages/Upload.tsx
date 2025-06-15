@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useRef } from "react";
@@ -108,7 +107,7 @@ const UploadPage = () => {
     }
   };
 
-  const handleDownload = (format: 'pdf' | 'docx') => {
+  const handleDownload = (format: 'pdf' | 'rtf') => {
     toast({
       title: `Downloading ${format.toUpperCase()} Review`,
       description: "Your comprehensive peer review includes structured feedback for each manuscript section.",

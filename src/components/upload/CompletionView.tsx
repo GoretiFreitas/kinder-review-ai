@@ -5,7 +5,7 @@ import { CheckCircle, Download, Edit3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface CompletionViewProps {
-  onDownload: (format: 'pdf' | 'docx') => void;
+  onDownload: (format: 'pdf' | 'rtf') => void;
   onReviewAnother: () => void;
 }
 
@@ -77,10 +77,10 @@ const CompletionView = ({ onDownload, onReviewAnother }: CompletionViewProps) =>
           <Button
             size="lg"
             className="bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => onDownload('docx')}
+            onClick={() => onDownload('rtf')}
           >
             <Download className="mr-2 h-5 w-5" />
-            Download DOCX Review
+            Download RTF Review
           </Button>
         </div>
         
