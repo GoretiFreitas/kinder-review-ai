@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CheckCircle, Download } from "lucide-react";
+import { CheckCircle, Download, Edit3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface CompletionViewProps {
@@ -10,6 +10,10 @@ interface CompletionViewProps {
 }
 
 const CompletionView = ({ onDownload, onReviewAnother }: CompletionViewProps) => {
+  const handleReviewAndEdit = () => {
+    window.location.href = '/revision-review';
+  };
+
   return (
     <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
       <CardHeader className="text-center">
@@ -48,6 +52,17 @@ const CompletionView = ({ onDownload, onReviewAnother }: CompletionViewProps) =>
               Overall summary with prioritized action items
             </li>
           </ul>
+        </div>
+
+        <div className="text-center">
+          <Button
+            size="lg"
+            className="bg-green-600 hover:bg-green-700 text-white mb-4 w-full md:w-auto"
+            onClick={handleReviewAndEdit}
+          >
+            <Edit3 className="mr-2 h-5 w-5" />
+            Review & Edit AI Assessment
+          </Button>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
