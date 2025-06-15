@@ -45,6 +45,8 @@ const RevisionReview = () => {
   };
 
   const handleDownload = async (format: 'pdf' | 'docx') => {
+    console.log(`Starting ${format.toUpperCase()} download...`);
+    
     try {
       toast({
         title: `Generating ${format.toUpperCase()} Review`,
@@ -52,8 +54,10 @@ const RevisionReview = () => {
       });
 
       if (format === 'pdf') {
+        console.log('Calling generatePDF...');
         generatePDF(reviewSections);
       } else {
+        console.log('Calling generateDOCX...');
         await generateDOCX(reviewSections);
       }
 
@@ -62,10 +66,10 @@ const RevisionReview = () => {
         description: "Your comprehensive peer review has been downloaded.",
       });
     } catch (error) {
-      console.error('Download error:', error);
+      console.error(`${format.toUpperCase()} download error:`, error);
       toast({
         title: "Download Failed",
-        description: "There was an error generating your document. Please try again.",
+        description: `There was an error generating your ${format.toUpperCase()} document. Please try again.`,
         variant: "destructive",
       });
     }

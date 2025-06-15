@@ -26,103 +26,138 @@ const sectionTitles = {
 };
 
 export const generatePDF = (reviewSections: ReviewSections) => {
-  const pdf = new jsPDF();
-  const pageHeight = pdf.internal.pageSize.height;
-  const pageWidth = pdf.internal.pageSize.width;
-  const margin = 20;
-  const lineHeight = 7;
-  let yPosition = margin;
+  try {
+    const pdf = new jsPDF();
+    const pageHeight = pdf.internal.pageSize.height;
+    const pageWidth = pdf.internal.pageSize.width;
+    const margin = 20;
+    const lineHeight = 7;
+    let yPosition = margin;
 
-  // Title
-  pdf.setFontSize(20);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Comprehensive Peer Review', margin, yPosition);
-  yPosition += 20;
-
-  // Date
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPosition);
-  yPosition += 15;
-
-  // Sections
-  Object.entries(reviewSections).forEach(([key, content]) => {
-    const title = sectionTitles[key as keyof typeof sectionTitles];
-    
-    // Check if we need a new page
-    if (yPosition > pageHeight - 40) {
-      pdf.addPage();
-      yPosition = margin;
-    }
-
-    // Section title
-    pdf.setFontSize(14);
+    // Title
+    pdf.setFontSize(20);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(title, margin, yPosition);
-    yPosition += 10;
+    pdf.text('Comprehensive Peer Review', margin, yPosition);
+    yPosition += 20;
 
-    // Section content
+    // Date
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
-    
-    const lines = pdf.splitTextToSize(content, pageWidth - 2 * margin);
-    lines.forEach((line: string) => {
-      if (yPosition > pageHeight - margin) {
+    pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPosition);
+    yPosition += 15;
+
+    // Sections
+    Object.entries(reviewSections).forEach(([key, content]) => {
+      const title = sectionTitles[key as keyof typeof sectionTitles];
+      
+      // Check if we need a new page
+      if (yPosition > pageHeight - 40) {
         pdf.addPage();
         yPosition = margin;
       }
-      pdf.text(line, margin, yPosition);
-      yPosition += lineHeight;
-    });
-    
-    yPosition += 10;
-  });
 
-  pdf.save('peer-review.pdf');
+      // Section title
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(title, margin, yPosition);
+      yPosition += 10;
+
+      // Section content
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      
+      const lines = pdf.splitTextToSize(content, pageWidth - 2 * margin);
+      lines.forEach((line: string) => {
+        if (yPosition > pageHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.text(line, margin, yPosition);
+        yPosition += lineHeight;
+      });
+      
+      yPosition += 10;
+    });
+
+    pdf.save('peer-review.pdf');
+    console.log('PDF generated successfully');
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    throw new Error('Failed to generate PDF document');
+  }
 };
 
 export const generateDOCX = async (reviewSections: ReviewSections) => {
-  const children = [
-    new Paragraph({
-      text: 'Comprehensive Peer Review',
-      heading: HeadingLevel.TITLE,
-    }),
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: `Generated on: ${new Date().toLocaleDateString()}`,
-          italics: true,
-        }),
-      ],
-    }),
-    new Paragraph({ text: '' }), // Empty line
-  ];
-
-  Object.entries(reviewSections).forEach(([key, content]) => {
-    const title = sectionTitles[key as keyof typeof sectionTitles];
+  try {
+    console.log('Starting DOCX generation...');
     
-    children.push(
+    const children = [
       new Paragraph({
-        text: title,
-        heading: HeadingLevel.HEADING_1,
+        children: [
+          new TextRun({
+            text: 'Comprehensive Peer Review',
+            bold: true,
+            size: 32,
+          }),
+        ],
       }),
       new Paragraph({
-        text: content,
+        children: [
+          new TextRun({
+            text: `Generated on: ${new Date().toLocaleDateString()}`,
+            italics: true,
+          }),
+        ],
       }),
-      new Paragraph({ text: '' }) // Empty line
-    );
-  });
+      new Paragraph({ text: '' }), // Empty line
+    ];
 
-  const doc = new Document({
-    sections: [
-      {
-        properties: {},
-        children,
-      },
-    ],
-  });
+    Object.entries(reviewSections).forEach(([key, content]) => {
+      const title = sectionTitles[key as keyof typeof sectionTitles];
+      
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: title,
+              bold: true,
+              size: 24,
+            }),
+          ],
+        }),
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: content,
+            }),
+          ],
+        }),
+        new Paragraph({ text: '' }) // Empty line
+      );
+    });
 
-  const buffer = await Packer.toBuffer(doc);
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-  saveAs(blob, 'peer-review.docx');
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children,
+        },
+      ],
+    });
+
+    console.log('Document created, generating buffer...');
+    const buffer = await Packer.toBuffer(doc);
+    console.log('Buffer created, creating blob...');
+    
+    const blob = new Blob([buffer], { 
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+    });
+    
+    console.log('Saving file...');
+    saveAs(blob, 'peer-review.docx');
+    console.log('DOCX generated successfully');
+  } catch (error) {
+    console.error('DOCX generation error:', error);
+    throw new Error('Failed to generate DOCX document');
+  }
 };
