@@ -1,5 +1,4 @@
 import jsPDF from 'jspdf';
-import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 
 interface ReviewSections {
@@ -24,68 +23,39 @@ const sectionTitles = {
   overall: 'Overall Assessment'
 };
 
-// Helper function to check browser compatibility
-const checkBrowserCompatibility = () => {
-  if (typeof window === 'undefined') {
-    throw new Error('Window object not available');
-  }
-  
-  if (!window.Blob) {
-    throw new Error('Blob API not supported');
-  }
-  
-  if (!window.URL || !window.URL.createObjectURL) {
-    throw new Error('URL API not supported');
-  }
+// Helper function to escape RTF special characters
+const escapeRTF = (text: string): string => {
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/\{/g, '\\{')
+    .replace(/\}/g, '\\}')
+    .replace(/\n/g, '\\par ')
+    .replace(/\r/g, '');
 };
 
-// Helper function to chunk long text into smaller paragraphs
-const chunkText = (text: string, maxLength: number = 1000): string[] => {
-  if (text.length <= maxLength) {
-    return [text];
-  }
+// Generate RTF content
+const generateRTFContent = (reviewSections: ReviewSections): string => {
+  let rtfContent = '{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}';
   
-  const chunks = [];
-  let currentChunk = '';
-  const sentences = text.split('. ');
+  // Title
+  rtfContent += '\\f0\\fs28\\b Comprehensive Peer Review\\b0\\par\\par';
   
-  for (const sentence of sentences) {
-    if (currentChunk.length + sentence.length + 2 <= maxLength) {
-      currentChunk += (currentChunk ? '. ' : '') + sentence;
-    } else {
-      if (currentChunk) {
-        chunks.push(currentChunk + '.');
-        currentChunk = sentence;
-      } else {
-        // If a single sentence is too long, split it forcefully
-        chunks.push(sentence.substring(0, maxLength));
-        currentChunk = sentence.substring(maxLength);
-      }
-    }
-  }
+  // Date
+  rtfContent += `\\fs20 Generated on: ${new Date().toLocaleDateString()}\\par\\par\\par`;
   
-  if (currentChunk) {
-    chunks.push(currentChunk + (currentChunk.endsWith('.') ? '' : '.'));
-  }
-  
-  return chunks;
-};
-
-// Helper function to validate content
-const validateContent = (reviewSections: ReviewSections) => {
-  const totalLength = Object.values(reviewSections).join('').length;
-  console.log('Total content length:', totalLength);
-  
-  if (totalLength > 50000) {
-    console.warn('Content is very long, this might cause memory issues');
-  }
-  
-  // Check for problematic characters
+  // Sections
   Object.entries(reviewSections).forEach(([key, content]) => {
-    if (content.includes('\u0000')) {
-      console.warn(`Section ${key} contains null characters`);
-    }
+    const title = sectionTitles[key as keyof typeof sectionTitles];
+    
+    // Section title
+    rtfContent += `\\fs24\\b ${escapeRTF(title)}\\b0\\par\\par`;
+    
+    // Section content
+    rtfContent += `\\fs20 ${escapeRTF(content)}\\par\\par\\par`;
   });
+  
+  rtfContent += '}';
+  return rtfContent;
 };
 
 export const generatePDF = (reviewSections: ReviewSections) => {
@@ -150,193 +120,27 @@ export const generatePDF = (reviewSections: ReviewSections) => {
   }
 };
 
-export const generateDOCX = async (reviewSections: ReviewSections) => {
+export const generateRTF = (reviewSections: ReviewSections) => {
   try {
-    console.log('Starting DOCX generation with improved error handling...');
+    console.log('Starting RTF generation...');
     
-    // Step 1: Check browser compatibility
-    try {
-      checkBrowserCompatibility();
-      console.log('Browser compatibility check passed');
-    } catch (error) {
-      console.error('Browser compatibility error:', error);
-      throw new Error('Your browser does not support document generation');
-    }
+    // Generate RTF content
+    const rtfContent = generateRTFContent(reviewSections);
     
-    // Step 2: Validate content
-    try {
-      validateContent(reviewSections);
-      console.log('Content validation passed');
-    } catch (error) {
-      console.error('Content validation error:', error);
-      throw new Error('Document content validation failed');
-    }
-    
-    // Step 3: Create document structure with minimal complexity
-    const paragraphs = [];
-    
-    try {
-      // Title - using simpler structure
-      paragraphs.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: 'Comprehensive Peer Review',
-              bold: true,
-              size: 28, // 14pt
-            }),
-          ],
-        })
-      );
-
-      // Empty line
-      paragraphs.push(new Paragraph({ children: [new TextRun({ text: '' })] }));
-
-      // Date
-      paragraphs.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `Generated on: ${new Date().toLocaleDateString()}`,
-              italics: true,
-              size: 20, // 10pt
-            }),
-          ],
-        })
-      );
-
-      // Two empty lines
-      paragraphs.push(new Paragraph({ children: [new TextRun({ text: '' })] }));
-      paragraphs.push(new Paragraph({ children: [new TextRun({ text: '' })] }));
-
-      console.log('Created header paragraphs');
-    } catch (error) {
-      console.error('Error creating header:', error);
-      throw new Error('Failed to create document header');
-    }
-
-    // Step 4: Add sections with chunking for long content
-    try {
-      Object.entries(reviewSections).forEach(([key, content]) => {
-        const title = sectionTitles[key as keyof typeof sectionTitles];
-        
-        // Section title
-        paragraphs.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: title,
-                bold: true,
-                size: 22, // 11pt
-              }),
-            ],
-          })
-        );
-
-        // Empty line after title
-        paragraphs.push(new Paragraph({ children: [new TextRun({ text: '' })] }));
-
-        // Section content - chunk if too long
-        const contentChunks = chunkText(content, 800);
-        contentChunks.forEach((chunk, index) => {
-          paragraphs.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: chunk,
-                  size: 20, // 10pt
-                }),
-              ],
-            })
-          );
-          
-          // Add space between chunks if there are multiple
-          if (contentChunks.length > 1 && index < contentChunks.length - 1) {
-            paragraphs.push(new Paragraph({ children: [new TextRun({ text: '' })] }));
-          }
-        });
-
-        // Two empty lines after each section
-        paragraphs.push(new Paragraph({ children: [new TextRun({ text: '' })] }));
-        paragraphs.push(new Paragraph({ children: [new TextRun({ text: '' })] }));
-      });
-      
-      console.log(`Created ${paragraphs.length} paragraphs total`);
-    } catch (error) {
-      console.error('Error creating content paragraphs:', error);
-      throw new Error('Failed to create document content');
-    }
-
-    // Step 5: Create document with minimal structure
-    let doc;
-    try {
-      console.log('Creating document object...');
-      doc = new Document({
-        sections: [
-          {
-            children: paragraphs,
-          },
-        ],
-      });
-      console.log('Document object created successfully');
-    } catch (error) {
-      console.error('Error creating document object:', error);
-      throw new Error('Failed to create document structure');
-    }
-
-    // Step 6: Generate buffer with timeout
-    let buffer;
-    try {
-      console.log('Generating buffer...');
-      const startTime = Date.now();
-      
-      // Add a timeout wrapper
-      const bufferPromise = Packer.toBuffer(doc);
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Document generation timeout')), 30000);
-      });
-      
-      buffer = await Promise.race([bufferPromise, timeoutPromise]);
-      
-      const endTime = Date.now();
-      console.log(`Buffer generated successfully in ${endTime - startTime}ms, size: ${buffer.byteLength} bytes`);
-    } catch (error) {
-      console.error('Error generating buffer:', error);
-      if (error.message === 'Document generation timeout') {
-        throw new Error('Document generation took too long - try reducing content size');
-      }
-      throw new Error('Failed to generate document buffer');
-    }
-
-    // Step 7: Create and save blob
-    try {
-      console.log('Creating blob and saving file...');
-      const blob = new Blob([buffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-      });
-      
-      if (blob.size === 0) {
-        throw new Error('Generated blob is empty');
-      }
-      
-      console.log(`Blob created successfully, size: ${blob.size} bytes`);
-      saveAs(blob, 'peer-review.docx');
-      console.log('DOCX file saved successfully');
-      
-    } catch (error) {
-      console.error('Error saving file:', error);
-      throw new Error('Failed to save document file');
-    }
-    
-  } catch (error) {
-    console.error('DOCX generation failed at top level:', error);
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
+    // Create blob and save
+    const blob = new Blob([rtfContent], { 
+      type: 'application/rtf' 
     });
     
-    // Re-throw with original error for better debugging
-    throw error;
+    console.log(`RTF blob created successfully, size: ${blob.size} bytes`);
+    saveAs(blob, 'peer-review.rtf');
+    console.log('RTF file saved successfully');
+    
+  } catch (error) {
+    console.error('RTF generation failed:', error);
+    throw new Error('Failed to generate RTF document');
   }
 };
+
+// Keep the old function name for backward compatibility
+export const generateDOCX = generateRTF;
