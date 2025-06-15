@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Download, Edit3, Save, ArrowLeft, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { generatePDF, generateDOCX } from "@/utils/documentGenerator";
 
 const RevisionReview = () => {
   const { toast } = useToast();
@@ -44,11 +44,31 @@ const RevisionReview = () => {
     });
   };
 
-  const handleDownload = (format: 'pdf' | 'docx') => {
-    toast({
-      title: `Downloading ${format.toUpperCase()} Review`,
-      description: "Your edited comprehensive peer review is being downloaded.",
-    });
+  const handleDownload = async (format: 'pdf' | 'docx') => {
+    try {
+      toast({
+        title: `Generating ${format.toUpperCase()} Review`,
+        description: "Please wait while we prepare your document...",
+      });
+
+      if (format === 'pdf') {
+        generatePDF(reviewSections);
+      } else {
+        await generateDOCX(reviewSections);
+      }
+
+      toast({
+        title: `${format.toUpperCase()} Downloaded Successfully`,
+        description: "Your comprehensive peer review has been downloaded.",
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download Failed",
+        description: "There was an error generating your document. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const sections = [
