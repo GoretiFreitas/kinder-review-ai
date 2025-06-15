@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import UploadZone from "@/components/upload/UploadZone";
 import ProcessingView from "@/components/upload/ProcessingView";
 import CompletionView from "@/components/upload/CompletionView";
+import { generatePDF, generateRTF } from "@/utils/documentGenerator";
 
 const UploadPage = () => {
   const [isDragging, setIsDragging] = useState(false);
@@ -15,6 +16,18 @@ const UploadPage = () => {
   const [currentStage, setCurrentStage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Mock review data - in a real app this would come from the AI processing
+  const mockReviewSections = {
+    abstract: "The abstract provides a clear overview of the study objectives and main findings. However, it could benefit from more specific quantitative results and a clearer statement of the study's significance.",
+    introduction: "The introduction effectively establishes the research context and identifies the knowledge gap. The literature review is comprehensive, though some recent studies could be included.",
+    methodology: "The methodology is generally sound with appropriate statistical methods. However, the sample size justification needs strengthening with power analysis calculations.",
+    results: "Results are presented clearly with appropriate statistical analyses. Tables and figures effectively support the narrative. Consider reorganizing Table 2 for better readability.",
+    discussion: "The discussion appropriately interprets findings within the broader research context. Limitations are acknowledged, though the section on generalizability could be expanded.",
+    conclusion: "The conclusion effectively summarizes key findings and their implications. Consider strengthening the call-to-action for practitioners and researchers.",
+    references: "Reference list follows appropriate formatting standards. Most sources are current and relevant. Consider adding more recent systematic reviews.",
+    overall: "This manuscript presents valuable research with solid methodology and clear presentation. Overall assessment: Accept with minor revisions."
+  };
 
   const processingStages = [
     { stage: "Analyzing document structure...", progress: 15 },
@@ -107,12 +120,35 @@ const UploadPage = () => {
     }
   };
 
-  const handleDownload = (format: 'pdf' | 'rtf') => {
-    toast({
-      title: `Downloading ${format.toUpperCase()} Review`,
-      description: "Your comprehensive peer review includes structured feedback for each manuscript section.",
-    });
-    // In a real app, this would trigger the actual download
+  const handleDownload = async (format: 'pdf' | 'rtf') => {
+    console.log(`Starting ${format.toUpperCase()} download...`);
+    
+    try {
+      toast({
+        title: `Generating ${format.toUpperCase()} Review`,
+        description: "Please wait while we prepare your document...",
+      });
+
+      if (format === 'pdf') {
+        console.log('Calling generatePDF...');
+        generatePDF(mockReviewSections);
+      } else {
+        console.log('Calling generateRTF...');
+        await generateRTF(mockReviewSections);
+      }
+
+      toast({
+        title: `${format.toUpperCase()} Downloaded Successfully`,
+        description: "Your comprehensive peer review has been downloaded.",
+      });
+    } catch (error) {
+      console.error(`${format.toUpperCase()} download error:`, error);
+      toast({
+        title: "Download Failed",
+        description: `There was an error generating your ${format.toUpperCase()} document. Please try again.`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleReviewAnother = () => {
