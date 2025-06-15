@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Download, Edit3, Save, ArrowLeft } from "lucide-react";
+import { Download, Edit3, Save, ArrowLeft, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const RevisionReview = () => {
   const { toast } = useToast();
-  const [isEditing, setIsEditing] = useState(false);
+  const [editingSections, setEditingSections] = useState<Set<string>>(new Set());
   const [reviewSections, setReviewSections] = useState({
     abstract: "The abstract provides a clear overview of the study objectives and main findings. However, it could benefit from more specific quantitative results and a clearer statement of the study's significance. Consider adding specific effect sizes or statistical measures to strengthen the impact.",
     introduction: "The introduction effectively establishes the research context and identifies the knowledge gap. The literature review is comprehensive, though some recent studies (2023-2024) could be included to ensure currency. The research questions are well-formulated and clearly stated.",
@@ -28,11 +28,19 @@ const RevisionReview = () => {
     }));
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    toast({
-      title: "Review saved",
-      description: "Your edits have been saved successfully.",
+  const toggleSectionEdit = (section: string) => {
+    setEditingSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(section)) {
+        newSet.delete(section);
+        toast({
+          title: "Section saved",
+          description: "Your edits have been saved successfully.",
+        });
+      } else {
+        newSet.add(section);
+      }
+      return newSet;
     });
   };
 
@@ -67,22 +75,6 @@ const RevisionReview = () => {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
-            <Button
-              variant={isEditing ? "default" : "outline"}
-              onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-            >
-              {isEditing ? (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Changes
-                </>
-              ) : (
-                <>
-                  <Edit3 className="mr-2 h-4 w-4" />
-                  Edit Review
-                </>
-              )}
-            </Button>
           </div>
         </div>
       </header>
@@ -94,39 +86,64 @@ const RevisionReview = () => {
               Review & Edit AI Assessment
             </h1>
             <p className="text-xl text-gray-600">
-              Review the AI-generated feedback and make any necessary edits before downloading
+              Click the edit button on any section to make changes
             </p>
           </div>
 
           <div className="space-y-6">
-            {sections.map(({ key, title, description }) => (
-              <Card key={key} className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold">{title}</CardTitle>
-                  <p className="text-sm text-gray-600">{description}</p>
-                </CardHeader>
-                <CardContent>
-                  {isEditing ? (
-                    <div className="space-y-2">
-                      <Label htmlFor={key}>Edit feedback:</Label>
-                      <Textarea
-                        id={key}
-                        value={reviewSections[key as keyof typeof reviewSections]}
-                        onChange={(e) => handleSectionEdit(key as keyof typeof reviewSections, e.target.value)}
-                        rows={4}
-                        className="min-h-[100px]"
-                      />
+            {sections.map(({ key, title, description }) => {
+              const isEditing = editingSections.has(key);
+              
+              return (
+                <Card key={key} className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+                        <p className="text-sm text-gray-600">{description}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={isEditing ? "default" : "outline"}
+                        onClick={() => toggleSectionEdit(key)}
+                      >
+                        {isEditing ? (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Save
+                          </>
+                        ) : (
+                          <>
+                            <Edit3 className="mr-2 h-4 w-4" />
+                            Edit
+                          </>
+                        )}
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-gray-800 leading-relaxed">
-                        {reviewSections[key as keyof typeof reviewSections]}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                  </CardHeader>
+                  <CardContent>
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        <Label htmlFor={key}>Edit feedback:</Label>
+                        <Textarea
+                          id={key}
+                          value={reviewSections[key as keyof typeof reviewSections]}
+                          onChange={(e) => handleSectionEdit(key as keyof typeof reviewSections, e.target.value)}
+                          rows={6}
+                          className="min-h-[150px]"
+                        />
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                          {reviewSections[key as keyof typeof reviewSections]}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           {/* Download Section */}
