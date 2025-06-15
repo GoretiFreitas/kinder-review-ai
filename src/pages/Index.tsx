@@ -57,7 +57,7 @@ const Index = () => {
               AI-guided, kinder peer review for every editor and reviewer.
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
-              Upload a manuscript and receive a structured, constructive review that helps authors to improve their submissions and save you time.
+              Upload a manuscript and receive a structured, constructive review that helps authors improve their submissions and saves you time.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
