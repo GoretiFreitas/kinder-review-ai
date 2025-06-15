@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,13 +18,13 @@ const Index = () => {
     {
       quote: "Finally, peer review that helps rather than hurts",
       author: "Prof. Martinez",
-      journal: "Nature Communications",
+      journal: "TCC Journal",
       rating: 5
     },
     {
       quote: "Our authors love the actionable feedback",
       author: "Dr. Chen",
-      journal: "Science Editor",
+      journal: "Island Network Essentials",
       rating: 5
     }
   ];
