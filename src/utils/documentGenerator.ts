@@ -1,6 +1,6 @@
 
 import jsPDF from 'jspdf';
-import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 
 interface ReviewSections {
@@ -91,7 +91,10 @@ export const generateDOCX = async (reviewSections: ReviewSections) => {
   try {
     console.log('Starting DOCX generation...');
     
-    const children = [
+    const paragraphs = [];
+
+    // Title
+    paragraphs.push(
       new Paragraph({
         children: [
           new TextRun({
@@ -100,22 +103,34 @@ export const generateDOCX = async (reviewSections: ReviewSections) => {
             size: 32,
           }),
         ],
-      }),
+        spacing: {
+          after: 400,
+        },
+      })
+    );
+
+    // Date
+    paragraphs.push(
       new Paragraph({
         children: [
           new TextRun({
             text: `Generated on: ${new Date().toLocaleDateString()}`,
             italics: true,
+            size: 20,
           }),
         ],
-      }),
-      new Paragraph({ text: '' }), // Empty line
-    ];
+        spacing: {
+          after: 600,
+        },
+      })
+    );
 
+    // Add sections
     Object.entries(reviewSections).forEach(([key, content]) => {
       const title = sectionTitles[key as keyof typeof sectionTitles];
       
-      children.push(
+      // Section title
+      paragraphs.push(
         new Paragraph({
           children: [
             new TextRun({
@@ -124,40 +139,54 @@ export const generateDOCX = async (reviewSections: ReviewSections) => {
               size: 24,
             }),
           ],
-        }),
+          spacing: {
+            before: 400,
+            after: 200,
+          },
+        })
+      );
+
+      // Section content
+      paragraphs.push(
         new Paragraph({
           children: [
             new TextRun({
               text: content,
+              size: 20,
             }),
           ],
-        }),
-        new Paragraph({ text: '' }) // Empty line
+          spacing: {
+            after: 400,
+          },
+        })
       );
     });
 
+    console.log('Creating document...');
     const doc = new Document({
       sections: [
         {
           properties: {},
-          children,
+          children: paragraphs,
         },
       ],
     });
 
-    console.log('Document created, generating buffer...');
+    console.log('Generating buffer...');
     const buffer = await Packer.toBuffer(doc);
-    console.log('Buffer created, creating blob...');
+    console.log('Buffer generated successfully, size:', buffer.byteLength);
     
+    console.log('Creating and saving blob...');
     const blob = new Blob([buffer], { 
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
     });
     
-    console.log('Saving file...');
     saveAs(blob, 'peer-review.docx');
-    console.log('DOCX generated successfully');
+    console.log('DOCX file saved successfully');
+    
   } catch (error) {
-    console.error('DOCX generation error:', error);
-    throw new Error('Failed to generate DOCX document');
+    console.error('Detailed DOCX generation error:', error);
+    console.error('Error stack:', error.stack);
+    throw error;
   }
 };
