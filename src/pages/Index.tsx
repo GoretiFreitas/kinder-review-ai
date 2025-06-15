@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +57,7 @@ const Index = () => {
               AI-guided, kinder peer review for every editor and reviewer.
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
-              Upload a manuscript and receive a structured, constructive review that helps authors improve—not just criticize.
+              Upload a manuscript and receive a structured, constructive review that helps authors to improve their submissions and save you time.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
