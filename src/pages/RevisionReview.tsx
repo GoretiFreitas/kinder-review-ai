@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Download, Edit3, Save, ArrowLeft, Eye } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Download, Edit3, Save, ArrowLeft, Eye, Brain } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generatePDF, generateDOCX } from "@/utils/documentGenerator";
+import AIRevisionMode from "@/components/revision/AIRevisionMode";
 
 const RevisionReview = () => {
   const { toast } = useToast();
@@ -42,6 +44,13 @@ const RevisionReview = () => {
       }
       return newSet;
     });
+  };
+
+  const handleSectionUpdate = (section: string, newContent: string) => {
+    setReviewSections(prev => ({
+      ...prev,
+      [section]: newContent
+    }));
   };
 
   const handleDownload = async (format: 'pdf' | 'rtf') => {
@@ -110,65 +119,85 @@ const RevisionReview = () => {
               Review & Edit AI Assessment
             </h1>
             <p className="text-xl text-gray-600">
-              Click the edit button on any section to make changes
+              Manual editing or AI-powered sentence-by-sentence revision
             </p>
           </div>
 
-          <div className="space-y-6">
-            {sections.map(({ key, title, description }) => {
-              const isEditing = editingSections.has(key);
-              
-              return (
-                <Card key={key} className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-xl font-semibold">{title}</CardTitle>
-                        <p className="text-sm text-gray-600">{description}</p>
+          <Tabs defaultValue="manual" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="manual" className="flex items-center gap-2">
+                <Edit3 className="h-4 w-4" />
+                Manual Editing
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="flex items-center gap-2">
+                <Brain className="h-4 w-4" />
+                AI Revision
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="manual" className="space-y-6 mt-6">
+              {sections.map(({ key, title, description }) => {
+                const isEditing = editingSections.has(key);
+                
+                return (
+                  <Card key={key} className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+                          <p className="text-sm text-gray-600">{description}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={isEditing ? "default" : "outline"}
+                          onClick={() => toggleSectionEdit(key)}
+                        >
+                          {isEditing ? (
+                            <>
+                              <Save className="mr-2 h-4 w-4" />
+                              Save
+                            </>
+                          ) : (
+                            <>
+                              <Edit3 className="mr-2 h-4 w-4" />
+                              Edit
+                            </>
+                          )}
+                        </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        variant={isEditing ? "default" : "outline"}
-                        onClick={() => toggleSectionEdit(key)}
-                      >
-                        {isEditing ? (
-                          <>
-                            <Save className="mr-2 h-4 w-4" />
-                            Save
-                          </>
-                        ) : (
-                          <>
-                            <Edit3 className="mr-2 h-4 w-4" />
-                            Edit
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {isEditing ? (
-                      <div className="space-y-2">
-                        <Label htmlFor={key}>Edit feedback:</Label>
-                        <Textarea
-                          id={key}
-                          value={reviewSections[key as keyof typeof reviewSections]}
-                          onChange={(e) => handleSectionEdit(key as keyof typeof reviewSections, e.target.value)}
-                          rows={6}
-                          className="min-h-[150px]"
-                        />
-                      </div>
-                    ) : (
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                          {reviewSections[key as keyof typeof reviewSections]}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                    </CardHeader>
+                    <CardContent>
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <Label htmlFor={key}>Edit feedback:</Label>
+                          <Textarea
+                            id={key}
+                            value={reviewSections[key as keyof typeof reviewSections]}
+                            onChange={(e) => handleSectionEdit(key as keyof typeof reviewSections, e.target.value)}
+                            rows={6}
+                            className="min-h-[150px]"
+                          />
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                            {reviewSections[key as keyof typeof reviewSections]}
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </TabsContent>
+
+            <TabsContent value="ai" className="mt-6">
+              <AIRevisionMode
+                reviewSections={reviewSections}
+                onSectionUpdate={handleSectionUpdate}
+              />
+            </TabsContent>
+          </Tabs>
 
           {/* Download Section */}
           <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl mt-8">
