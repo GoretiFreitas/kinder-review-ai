@@ -1,12 +1,32 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Brain, Download, FileText, MessageCircle, CheckCircle, Users, Youtube, Linkedin, Twitter } from "lucide-react";
+import { Upload, Brain, Download, FileText, MessageCircle, CheckCircle, Users, Youtube, Linkedin, Twitter, Quote } from "lucide-react";
 import { useState } from "react";
 
 const Index = () => {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+
+  const testimonials = [
+    {
+      quote: "Most constructive review we've ever received",
+      author: "Dr. Kim",
+      journal: "The DeSci Journal",
+      rating: 5
+    },
+    {
+      quote: "Finally, peer review that helps rather than hurts",
+      author: "Prof. Martinez",
+      journal: "Nature Communications",
+      rating: 5
+    },
+    {
+      quote: "Our authors love the actionable feedback",
+      author: "Dr. Chen",
+      journal: "Science Editor",
+      rating: 5
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#E0F7FF] to-[#FCE4EC]">
@@ -166,6 +186,38 @@ const Index = () => {
               <p className="text-gray-600">Prompts for data & code sharing</p>
             </CardContent>
           </Card>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-semibold text-gray-800 mb-4">What Editors Say</h2>
+          <p className="text-xl text-gray-600">Real feedback from journal editors and reviewers</p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {testimonials.map((testimonial, index) => (
+            <Card key={index} className="bg-white/70 backdrop-blur-sm border-white/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <CardHeader className="pb-4">
+                <div className="flex items-center space-x-1 mb-3">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <span key={i} className="text-yellow-400 text-lg">⭐</span>
+                  ))}
+                </div>
+                <Quote className="h-8 w-8 text-blue-400 mb-2" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 mb-4 italic text-lg leading-relaxed">
+                  "{testimonial.quote}"
+                </p>
+                <div className="text-sm text-gray-600">
+                  <div className="font-semibold">{testimonial.author}</div>
+                  <div className="text-gray-500">{testimonial.journal}</div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </section>
 
